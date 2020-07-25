@@ -1,3 +1,41 @@
+function parseAssignment(str) {
+  const assignmentParts = str.split("=");
+  const fieldName = assignmentParts[0].trim();
+  const fieldValue = assignmentParts[1].trim();
+  const result = {};
+  try {
+    result[fieldName] = JSON.parse(fieldValue);
+  } catch (error) {
+    result[fieldName] = fieldValue;
+  }
+  return result;
+};
+
+  // will transform this object:
+  // { header: 'Content-Disposition: form-data; name="uploads[]"; filename="A.txt"',
+  //	 info: 'Content-Type: text/plain',
+  //	 part: 'AAAABBBB' }
+  // into this one:
+  // { filename: 'A.txt', type: 'text/plain', data: <Buffer 41 41 41 41 42 42 42 42> }
+function transformField(part) {
+  const header = part.header.split(";");
+  const file = parseAssignment(header[2]);
+  const contentType = part.info.split(":")[1].trim();
+  Object.defineProperty(file, "type", {
+    value: contentType,
+    writable: true,
+    enumerable: true,
+    configurable: true,
+  });
+  Object.defineProperty(file, "data", {
+    value: new Buffer(part.part),
+    writable: true,
+    enumerable: true,
+    configurable: true,
+  });
+  return file;
+};
+
 /**
  	Multipart Parser (Finite State Machine)
 
@@ -17,38 +55,6 @@
 			 Twitter: @DevMcDavid
  */
 exports.Parse = function (multipartBodyBuffer, boundary) {
-  const process = function (part) {
-    // will transform this object:
-    // { header: 'Content-Disposition: form-data; name="uploads[]"; filename="A.txt"',
-    //	 info: 'Content-Type: text/plain',
-    //	 part: 'AAAABBBB' }
-    // into this one:
-    // { filename: 'A.txt', type: 'text/plain', data: <Buffer 41 41 41 41 42 42 42 42> }
-    const parseAssignment = function (str) {
-      const assignmentParts = str.split("=");
-      const fieldName = assignmentParts[0].trim();
-      const fieldValue = JSON.parse(assignmentParts[1].trim());
-      const result = {};
-      result[fieldName] = fieldValue;
-      return result;
-    };
-    const header = part.header.split(";");
-    const file = parseAssignment(header[2]);
-    const contentType = part.info.split(":")[1].trim();
-    Object.defineProperty(file, "type", {
-      value: contentType,
-      writable: true,
-      enumerable: true,
-      configurable: true,
-    });
-    Object.defineProperty(file, "data", {
-      value: new Buffer(part.part),
-      writable: true,
-      enumerable: true,
-      configurable: true,
-    });
-    return file;
-  };
   var lastline = "";
   var header = "";
   var info = "";
@@ -87,7 +93,7 @@ exports.Parse = function (multipartBodyBuffer, boundary) {
         const j = buffer.length - lastline.length;
         const part = buffer.slice(0, j - 1);
         const p = { header: header, info: info, part: part };
-        allParts.push(process(p));
+        allParts.push(transformField(p));
         buffer = [];
         lastline = "";
         state = 5;
@@ -114,5 +120,5 @@ exports.getBoundary = function (header) {
   {
     return "";
   }
-  return boundaryItems[0].split("=")[1].trim();
+  return parseAssignment(boundaryItems[0]).boundary;
 };
