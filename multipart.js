@@ -13,22 +13,22 @@
 	// each part is:
 	// { filename: 'A.txt', type: 'text/plain', data: <Buffer 41 41 41 41 42 42 42 42> }
 
-	author:  Cristian Salazar (christiansalazarh@gmail.com) www.chileshift.cl
-			 Twitter: @AmazonAwsChile
+	author:  David McGinnis (mcginnda@davidmcginnis.net) www.davidmcginnis.net
+			 Twitter: @DevMcDavid
  */
 exports.Parse = function (multipartBodyBuffer, boundary) {
-  var process = function (part) {
+  const process = function (part) {
     // will transform this object:
     // { header: 'Content-Disposition: form-data; name="uploads[]"; filename="A.txt"',
     //	 info: 'Content-Type: text/plain',
     //	 part: 'AAAABBBB' }
     // into this one:
     // { filename: 'A.txt', type: 'text/plain', data: <Buffer 41 41 41 41 42 42 42 42> }
-    var obj = function (str) {
-      var k = str.split("=");
-      var a = k[0].trim();
-      var b = JSON.parse(k[1].trim());
-      var o = {};
+    const obj = function (str) {
+      const k = str.split("=");
+      const a = k[0].trim();
+      const b = JSON.parse(k[1].trim());
+      const o = {};
       Object.defineProperty(o, a, {
         value: b,
         writable: true,
@@ -37,9 +37,9 @@ exports.Parse = function (multipartBodyBuffer, boundary) {
       });
       return o;
     };
-    var header = part.header.split(";");
-    var file = obj(header[2]);
-    var contentType = part.info.split(":")[1].trim();
+    const header = part.header.split(";");
+    const file = obj(header[2]);
+    const contentType = part.info.split(":")[1].trim();
     Object.defineProperty(file, "type", {
       value: contentType,
       writable: true,
@@ -54,19 +54,18 @@ exports.Parse = function (multipartBodyBuffer, boundary) {
     });
     return file;
   };
-  var prev = null;
   var lastline = "";
   var header = "";
   var info = "";
   var state = 0;
   var buffer = [];
-  var allParts = [];
+  const allParts = [];
 
   for (i = 0; i < multipartBodyBuffer.length; i++) {
-    var oneByte = multipartBodyBuffer[i];
-    var prevByte = i > 0 ? multipartBodyBuffer[i - 1] : null;
-    var newLineDetected = oneByte == 0x0a && prevByte == 0x0d ? true : false;
-    var newLineChar = oneByte == 0x0a || oneByte == 0x0d ? true : false;
+    const oneByte = multipartBodyBuffer[i];
+    const prevByte = i > 0 ? multipartBodyBuffer[i - 1] : null;
+    const newLineDetected = oneByte == 0x0a && prevByte == 0x0d ? true : false;
+    const newLineChar = oneByte == 0x0a || oneByte == 0x0d ? true : false;
 
     if (!newLineChar) lastline += String.fromCharCode(oneByte);
 
@@ -90,9 +89,9 @@ exports.Parse = function (multipartBodyBuffer, boundary) {
     } else if (4 == state) {
       if (lastline.length > boundary.length + 4) lastline = ""; // mem save
       if ("--" + boundary == lastline) {
-        var j = buffer.length - lastline.length;
-        var part = buffer.slice(0, j - 1);
-        var p = { header: header, info: info, part: part };
+        const j = buffer.length - lastline.length;
+        const part = buffer.slice(0, j - 1);
+        const p = { header: header, info: info, part: part };
         allParts.push(process(p));
         buffer = [];
         lastline = "";
