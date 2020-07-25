@@ -1,6 +1,14 @@
 const uut = require('./multipart')
 
 describe('Multipart Parser Tests', function () {
+    test('should correctly parse the boundary out of a header.', async function () {
+        const header = "multipart/form-data; boundary=--------------------------497983131095136311264163"
+        const expected = "--------------------------497983131095136311264163"
+        
+        const parsed = uut.getBoundary(header)
+        expect(parsed).toEqual(expected)
+    });
+
     test('should correctly parse multipart form data with a single field.', async function () {
         const fullBody = "----------------------------497983131095136311264163\r\n" +
         'Content-Disposition: form-data; name="file"; filename="uploadtest.txt"' + "\r\n" +
