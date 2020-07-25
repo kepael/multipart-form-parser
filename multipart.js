@@ -67,13 +67,12 @@ function parseData(multipartBodyBuffer, startingIndex, boundary) {
   const dataLength = buffer.length - lastline.length;
   return {
     data: buffer.slice(0, dataLength - 1),
-    endOffset: i
+    endOffset: i + 2 // Include the new line
   }
 }
 
 const state_lookingForBoundary = 0;
 const state_readingData = 1;
-const state_dataRead = 2;
 const state_readingHeaders = 3;
 /**
  	Multipart Parser (Finite State Machine)
@@ -136,13 +135,9 @@ exports.Parse = function (multipartBodyBuffer, boundary) {
       allParts.push(transformFieldInfo(p));
 
       lastline = "";
-      state = state_dataRead;
+      state = state_readingHeaders;
       contentDisposition = "";
       contentType = "";
-    } else if (state_dataRead == state) {
-      if (newLineDetected) {
-        state = state_readingHeaders;
-      }
     }
   }
   return allParts;
