@@ -23,5 +23,8 @@
   "homepage": "https://github.com/davidov541/multipart-form-parser",
   "devDependencies": {
     "jest": "^26.1.0"
+  },
+  "publishConfig": { 
+    "registry": "https://npm.pkg.github.com/" 
   }
 }
