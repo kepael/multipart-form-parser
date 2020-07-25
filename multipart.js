@@ -44,6 +44,8 @@ const state_readingContentType = 2;
 const state_readingOtherHeaders = 3;
 const state_readingData = 4;
 const state_dataRead = 5;
+const state_readingHeaders = 6;
+const state_headerFinished = 7;
 /**
  	Multipart Parser (Finite State Machine)
 
@@ -80,21 +82,26 @@ exports.Parse = function (multipartBodyBuffer, boundary) {
 
     if (state_lookingForBoundary == state && newLineDetected) {
       if ("--" + boundary == lastline) {
-        state = state_readingDisposition;
+        state = state_readingHeaders;
       }
       lastline = "";
-    } else if (state_readingDisposition == state && newLineDetected) {
-      contentDisposition = lastline;
-      state = state_readingContentType;
+    } else if (state_readingHeaders == state && newLineDetected) {
+      const headerKey = lastline.split(":")[0].trim().toLowerCase()
+      switch (headerKey) {
+        case '':
+          state = state_readingData;
+          break;
+        case 'content-disposition':
+          contentDisposition = lastline;
+          break;
+        case 'content-type':
+          contentType = lastline;
+          break;
+        default:
+          break;
+      }
       lastline = "";
-    } else if (state_readingContentType == state && newLineDetected) {
-      contentType = lastline;
-      state = state_readingOtherHeaders;
-      lastline = "";
-    } else if (state_readingOtherHeaders == state && newLineDetected) {
-      state = state_readingData;
-      buffer = [];
-      lastline = "";
+      buffer = []
     } else if (state_readingData == state) {
       if (lastline.length > boundary.length + 4) lastline = ""; // mem save
       if ("--" + boundary == lastline) {
@@ -113,7 +120,7 @@ exports.Parse = function (multipartBodyBuffer, boundary) {
       if (newLineDetected) lastline = "";
     } else if (state_dataRead == state) {
       if (newLineDetected) {
-        state = state_readingDisposition;
+        state = state_readingHeaders;
       }
     }
   }
