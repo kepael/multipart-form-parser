@@ -16,7 +16,7 @@
 	author:  Cristian Salazar (christiansalazarh@gmail.com) www.chileshift.cl
 			 Twitter: @AmazonAwsChile
  */
-exports.Parse = function(multipartBodyBuffer,boundary){
+exports.Parse = function(multipartBodyBuffer, boundary){
 	var process = function(part){
 		// will transform this object:
 		// { header: 'Content-Disposition: form-data; name="uploads[]"; filename="A.txt"',
