@@ -24,21 +24,16 @@ exports.Parse = function (multipartBodyBuffer, boundary) {
     //	 part: 'AAAABBBB' }
     // into this one:
     // { filename: 'A.txt', type: 'text/plain', data: <Buffer 41 41 41 41 42 42 42 42> }
-    const obj = function (str) {
-      const k = str.split("=");
-      const a = k[0].trim();
-      const b = JSON.parse(k[1].trim());
-      const o = {};
-      Object.defineProperty(o, a, {
-        value: b,
-        writable: true,
-        enumerable: true,
-        configurable: true,
-      });
-      return o;
+    const parseAssignment = function (str) {
+      const assignmentParts = str.split("=");
+      const fieldName = assignmentParts[0].trim();
+      const fieldValue = JSON.parse(assignmentParts[1].trim());
+      const result = {};
+      result[fieldName] = fieldValue;
+      return result;
     };
     const header = part.header.split(";");
-    const file = obj(header[2]);
+    const file = parseAssignment(header[2]);
     const contentType = part.info.split(":")[1].trim();
     Object.defineProperty(file, "type", {
       value: contentType,
