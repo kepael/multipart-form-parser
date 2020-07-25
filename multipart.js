@@ -18,9 +18,9 @@ function parseAssignment(str) {
   // into this one:
   // { filename: 'A.txt', type: 'text/plain', data: <Buffer 41 41 41 41 42 42 42 42> }
 function transformField(part) {
-  const header = part.header.split(";");
+  const header = part.disposition.split(";");
   const file = parseAssignment(header[2]);
-  const contentType = part.info.split(":")[1].trim();
+  const contentType = part.type.split(":")[1].trim();
   file.type = contentType;
   file.data = new Buffer(part.part)
   return file;
@@ -88,7 +88,7 @@ exports.Parse = function (multipartBodyBuffer, boundary) {
       if ("--" + boundary == lastline) {
         const j = buffer.length - lastline.length;
         const part = buffer.slice(0, j - 1);
-        const p = { header: contentDisposition, info: contentType, part: part };
+        const p = { disposition: contentDisposition, type: contentType, part: part };
         allParts.push(transformField(p));
         buffer = [];
         lastline = "";
