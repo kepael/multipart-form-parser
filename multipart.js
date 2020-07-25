@@ -17,13 +17,15 @@ function parseAssignment(str) {
   //	 part: 'AAAABBBB' }
   // into this one:
   // { filename: 'A.txt', type: 'text/plain', data: <Buffer 41 41 41 41 42 42 42 42> }
-function transformField(part) {
-  const header = part.disposition.split(";");
-  const file = parseAssignment(header[2]);
-  const contentType = part.type.split(":")[1].trim();
-  file.type = contentType;
-  file.data = new Buffer(part.part)
-  return file;
+function transformField(field) {
+  const dispositionParts = field.disposition.split(";");
+  const newField = parseAssignment(dispositionParts[2]);
+
+  const contentType = field.type.split(":")[1].trim();
+
+  newField.type = contentType;
+  newField.data = new Buffer(field.data)
+  return newField;
 };
 
 const state_lookingForBoundary = 0;
@@ -87,8 +89,8 @@ exports.Parse = function (multipartBodyBuffer, boundary) {
       if (lastline.length > boundary.length + 4) lastline = ""; // mem save
       if ("--" + boundary == lastline) {
         const j = buffer.length - lastline.length;
-        const part = buffer.slice(0, j - 1);
-        const p = { disposition: contentDisposition, type: contentType, part: part };
+        const data = buffer.slice(0, j - 1);
+        const p = { disposition: contentDisposition, type: contentType, data: data };
         allParts.push(transformField(p));
         buffer = [];
         lastline = "";
