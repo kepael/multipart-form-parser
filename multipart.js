@@ -1,12 +1,15 @@
 function parseAssignment(str) {
-  const assignmentParts = str.split("=");
-  const fieldName = assignmentParts[0].trim();
-  const fieldValue = assignmentParts[1].trim();
   const result = {};
-  try {
-    result[fieldName] = JSON.parse(fieldValue);
-  } catch (error) {
-    result[fieldName] = fieldValue;
+  const assignmentParts = str.split("=");
+  if (assignmentParts.length == 2)
+  {
+    const fieldName = assignmentParts[0].trim();
+    const fieldValue = assignmentParts[1].trim();
+    try {
+      result[fieldName] = JSON.parse(fieldValue);
+    } catch (error) {
+      result[fieldName] = fieldValue;
+    }
   }
   return result;
 };
@@ -17,9 +20,16 @@ function parseAssignment(str) {
   //	 part: 'AAAABBBB' }
   // into this one:
   // { filename: 'A.txt', type: 'text/plain', data: <Buffer 41 41 41 41 42 42 42 42> }
-function transformField(field) {
+function transformFieldInfo(field) {
+  const newField = {}
+  
   const dispositionParts = field.disposition.split(";");
-  const newField = parseAssignment(dispositionParts[2]);
+  const assignments = dispositionParts.map(p => parseAssignment(p));
+  const fileNames = assignments.filter(p => p.filename)
+  if (fileNames.length > 0)
+  {
+    newField.filename = fileNames[0].filename
+  }
 
   const contentType = field.type.split(":")[1].trim();
 
@@ -91,7 +101,7 @@ exports.Parse = function (multipartBodyBuffer, boundary) {
         const j = buffer.length - lastline.length;
         const data = buffer.slice(0, j - 1);
         const p = { disposition: contentDisposition, type: contentType, data: data };
-        allParts.push(transformField(p));
+        allParts.push(transformFieldInfo(p));
         buffer = [];
         lastline = "";
         state = state_dataRead;

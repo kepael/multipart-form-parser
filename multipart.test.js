@@ -36,8 +36,31 @@ describe("Multipart Parser Tests", function () {
   test("should correctly parse multipart form data with a single field.", async function () {
     const fullBody =
       "----------------------------497983131095136311264163\r\n" +
-      'Content-Disposition: form-data; name="file"; filename="uploadtest.txt"' +
+      'Content-Disposition: form-data; name="file"; filename="uploadtest.txt"' + "\r\n" +
+      "Content-Type: text/plain\r\n" +
       "\r\n" +
+      "Hello World\r\n" +
+      "----------------------------497983131095136311264163--";
+    const fullBodyBuffer = new Buffer(fullBody, "utf-8");
+    const dataBuffer = new Buffer("Hello World", "ascii");
+
+    const boundary = "--------------------------497983131095136311264163";
+
+    const parsed = uut.Parse(fullBodyBuffer, boundary);
+    const expected = [
+      {
+        data: dataBuffer,
+        filename: "uploadtest.txt",
+        type: "text/plain",
+      },
+    ];
+    expect(parsed).toEqual(expected);
+  });
+
+  test("should correctly parse multipart form data with no name in the content-disposition.", async function () {
+    const fullBody =
+      "----------------------------497983131095136311264163\r\n" +
+      'Content-Disposition: form-data; filename="uploadtest.txt"' + "\r\n" +
       "Content-Type: text/plain\r\n" +
       "\r\n" +
       "Hello World\r\n" +
@@ -61,14 +84,12 @@ describe("Multipart Parser Tests", function () {
   test("should correctly parse multipart form data with multiple fields.", async function () {
     const fullBody =
       "----------------------------497983131095136311264163\r\n" +
-      'Content-Disposition: form-data; name="file"; filename="uploadtest.txt"' +
-      "\r\n" +
+      'Content-Disposition: form-data; name="file"; filename="uploadtest.txt"' + "\r\n" +
       "Content-Type: text/plain\r\n" +
       "\r\n" +
       "Hello World\r\n" +
       "----------------------------497983131095136311264163\r\n" +
-      'Content-Disposition: form-data; name="file2"; filename="uploadtest2.txt"' +
-      "\r\n" +
+      'Content-Disposition: form-data; name="file2"; filename="uploadtest2.txt"' + "\r\n" +
       "Content-Type: text/plain\r\n" +
       "\r\n" +
       "Goodbye World\r\n" +
