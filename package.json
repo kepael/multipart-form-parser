@@ -1,16 +1,16 @@
 {
-  "name": "parse-multipart",
-  "version": "1.0.0004",
+  "name": "multipart-form-parser",
+  "version": "1.0.0",
   "description": "A javascript/nodejs multipart/form-data parser which operates on raw data.",
   "main": "multipart.js",
-  "author": "Cristian Salazar (christiansalazarh@gmail.com)",
+  "author": "David McGinnis (mcginnda@davidmcginnis.net)",
   "license": "MIT",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/freesoftwarefactory/parse-multipart.git"
+    "url": "git+https://github.com/davidov541/multipart-form-parser.git"
   },
   "keywords": [
     "multipart/form-data",
@@ -18,7 +18,7 @@
     "fileuploader"
   ],
   "bugs": {
-    "url": "https://github.com/freesoftwarefactory/parse-multipart/issues"
+    "url": "https://github.com/davidov541/multipart-form-parser/issues"
   },
-  "homepage": "https://github.com/freesoftwarefactory/parse-multipart#readme"
+  "homepage": "https://github.com/davidov541/multipart-form-parser"
 }
