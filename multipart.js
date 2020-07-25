@@ -38,6 +38,39 @@ function transformFieldInfo(field) {
   return newField;
 };
 
+function parseData(multipartBodyBuffer, startingIndex, boundary) {
+  var buffer = [];
+  var lastline = ""
+  for (i = startingIndex; i < multipartBodyBuffer.length; i++) {
+    const oneByte = multipartBodyBuffer[i];
+    const prevByte = i > 0 ? multipartBodyBuffer[i - 1] : null;
+    const newLineDetected = oneByte == 0x0a && prevByte == 0x0d ? true : false;
+    const newLineChar = oneByte == 0x0a || oneByte == 0x0d ? true : false;
+
+    if (!newLineChar) {
+      lastline += String.fromCharCode(oneByte);
+    }
+
+    if (lastline.length > boundary.length + 4) {
+      lastline = ""; // mem save
+    }
+
+    if ("--" + boundary == lastline) {
+      break;
+    } else {
+      buffer.push(oneByte);
+    }
+    if (newLineDetected) {
+      lastline = "";
+    }
+  }
+  const dataLength = buffer.length - lastline.length;
+  return {
+    data: buffer.slice(0, dataLength - 1),
+    endOffset: i
+  }
+}
+
 const state_lookingForBoundary = 0;
 const state_readingData = 1;
 const state_dataRead = 2;
@@ -65,7 +98,6 @@ exports.Parse = function (multipartBodyBuffer, boundary) {
   var contentDisposition = "";
   var contentType = "";
   var state = state_lookingForBoundary;
-  var buffer = [];
   const allParts = [];
 
   for (i = 0; i < multipartBodyBuffer.length; i++) {
@@ -97,23 +129,16 @@ exports.Parse = function (multipartBodyBuffer, boundary) {
           break;
       }
       lastline = "";
-      buffer = []
     } else if (state_readingData == state) {
-      if (lastline.length > boundary.length + 4) lastline = ""; // mem save
-      if ("--" + boundary == lastline) {
-        const j = buffer.length - lastline.length;
-        const data = buffer.slice(0, j - 1);
-        const p = { disposition: contentDisposition, type: contentType, data: data };
-        allParts.push(transformFieldInfo(p));
-        buffer = [];
-        lastline = "";
-        state = state_dataRead;
-        contentDisposition = "";
-        contentType = "";
-      } else {
-        buffer.push(oneByte);
-      }
-      if (newLineDetected) lastline = "";
+      const info = parseData(multipartBodyBuffer, i, boundary);
+      i = info.endOffset;
+      const p = { disposition: contentDisposition, type: contentType, data: info.data };
+      allParts.push(transformFieldInfo(p));
+
+      lastline = "";
+      state = state_dataRead;
+      contentDisposition = "";
+      contentType = "";
     } else if (state_dataRead == state) {
       if (newLineDetected) {
         state = state_readingHeaders;
