@@ -52,8 +52,8 @@ const state_dataRead = 5;
  */
 exports.Parse = function (multipartBodyBuffer, boundary) {
   var lastline = "";
-  var header = "";
-  var info = "";
+  var contentDisposition = "";
+  var contentType = "";
   var state = state_lookingForBoundary;
   var buffer = [];
   const allParts = [];
@@ -72,11 +72,11 @@ exports.Parse = function (multipartBodyBuffer, boundary) {
       }
       lastline = "";
     } else if (state_readingDisposition == state && newLineDetected) {
-      header = lastline;
+      contentDisposition = lastline;
       state = state_readingContentType;
       lastline = "";
     } else if (state_readingContentType == state && newLineDetected) {
-      info = lastline;
+      contentType = lastline;
       state = state_readingOtherHeaders;
       lastline = "";
     } else if (state_readingOtherHeaders == state && newLineDetected) {
@@ -88,20 +88,20 @@ exports.Parse = function (multipartBodyBuffer, boundary) {
       if ("--" + boundary == lastline) {
         const j = buffer.length - lastline.length;
         const part = buffer.slice(0, j - 1);
-        const p = { header: header, info: info, part: part };
+        const p = { header: contentDisposition, info: contentType, part: part };
         allParts.push(transformField(p));
         buffer = [];
         lastline = "";
         state = state_dataRead;
-        header = "";
-        info = "";
+        contentDisposition = "";
+        contentType = "";
       } else {
         buffer.push(oneByte);
       }
       if (newLineDetected) lastline = "";
     } else if (state_dataRead == state) {
       if (newLineDetected) {
-        state = state_readingContentType;
+        state = state_readingDisposition;
       }
     }
   }
