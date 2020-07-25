@@ -21,21 +21,17 @@ function transformField(part) {
   const header = part.header.split(";");
   const file = parseAssignment(header[2]);
   const contentType = part.info.split(":")[1].trim();
-  Object.defineProperty(file, "type", {
-    value: contentType,
-    writable: true,
-    enumerable: true,
-    configurable: true,
-  });
-  Object.defineProperty(file, "data", {
-    value: new Buffer(part.part),
-    writable: true,
-    enumerable: true,
-    configurable: true,
-  });
+  file.type = contentType;
+  file.data = new Buffer(part.part)
   return file;
 };
 
+const state_lookingForBoundary = 0;
+const state_readingDisposition = 1;
+const state_readingContentType = 2;
+const state_readingOtherHeaders = 3;
+const state_readingData = 4;
+const state_dataRead = 5;
 /**
  	Multipart Parser (Finite State Machine)
 
@@ -58,7 +54,7 @@ exports.Parse = function (multipartBodyBuffer, boundary) {
   var lastline = "";
   var header = "";
   var info = "";
-  var state = 0;
+  var state = state_lookingForBoundary;
   var buffer = [];
   const allParts = [];
 
@@ -70,24 +66,24 @@ exports.Parse = function (multipartBodyBuffer, boundary) {
 
     if (!newLineChar) lastline += String.fromCharCode(oneByte);
 
-    if (0 == state && newLineDetected) {
+    if (state_lookingForBoundary == state && newLineDetected) {
       if ("--" + boundary == lastline) {
-        state = 1;
+        state = state_readingDisposition;
       }
       lastline = "";
-    } else if (1 == state && newLineDetected) {
+    } else if (state_readingDisposition == state && newLineDetected) {
       header = lastline;
-      state = 2;
+      state = state_readingContentType;
       lastline = "";
-    } else if (2 == state && newLineDetected) {
+    } else if (state_readingContentType == state && newLineDetected) {
       info = lastline;
-      state = 3;
+      state = state_readingOtherHeaders;
       lastline = "";
-    } else if (3 == state && newLineDetected) {
-      state = 4;
+    } else if (state_readingOtherHeaders == state && newLineDetected) {
+      state = state_readingData;
       buffer = [];
       lastline = "";
-    } else if (4 == state) {
+    } else if (state_readingData == state) {
       if (lastline.length > boundary.length + 4) lastline = ""; // mem save
       if ("--" + boundary == lastline) {
         const j = buffer.length - lastline.length;
@@ -96,15 +92,17 @@ exports.Parse = function (multipartBodyBuffer, boundary) {
         allParts.push(transformField(p));
         buffer = [];
         lastline = "";
-        state = 5;
+        state = state_dataRead;
         header = "";
         info = "";
       } else {
         buffer.push(oneByte);
       }
       if (newLineDetected) lastline = "";
-    } else if (5 == state) {
-      if (newLineDetected) state = 1;
+    } else if (state_dataRead == state) {
+      if (newLineDetected) {
+        state = state_readingContentType;
+      }
     }
   }
   return allParts;
