@@ -39,13 +39,9 @@ function transformFieldInfo(field) {
 };
 
 const state_lookingForBoundary = 0;
-const state_readingDisposition = 1;
-const state_readingContentType = 2;
-const state_readingOtherHeaders = 3;
-const state_readingData = 4;
-const state_dataRead = 5;
-const state_readingHeaders = 6;
-const state_headerFinished = 7;
+const state_readingData = 1;
+const state_dataRead = 2;
+const state_readingHeaders = 3;
 /**
  	Multipart Parser (Finite State Machine)
 
