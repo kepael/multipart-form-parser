@@ -38,6 +38,27 @@ function transformFieldInfo(field) {
   return newField;
 };
 
+function findInitialBoundary(multipartBodyBuffer, boundary) {
+  var lastline = "";
+
+  for (i = 0; i < multipartBodyBuffer.length; i++) {
+    const oneByte = multipartBodyBuffer[i];
+    const prevByte = i > 0 ? multipartBodyBuffer[i - 1] : null;
+    const newLineDetected = oneByte == 0x0a && prevByte == 0x0d ? true : false;
+    const newLineChar = oneByte == 0x0a || oneByte == 0x0d ? true : false;
+
+    if (!newLineChar) lastline += String.fromCharCode(oneByte);
+
+    if (newLineDetected) {
+      if ("--" + boundary == lastline) {
+        break;
+      }
+      lastline = "";
+    }
+  }
+  return i + 1;
+}
+
 function parseData(multipartBodyBuffer, startingIndex, boundary) {
   var buffer = [];
   var lastline = ""
@@ -71,7 +92,6 @@ function parseData(multipartBodyBuffer, startingIndex, boundary) {
   }
 }
 
-const state_lookingForBoundary = 0;
 const state_readingData = 1;
 const state_readingHeaders = 3;
 /**
@@ -96,10 +116,11 @@ exports.Parse = function (multipartBodyBuffer, boundary) {
   var lastline = "";
   var contentDisposition = "";
   var contentType = "";
-  var state = state_lookingForBoundary;
+  var state = state_readingHeaders;
+  var i = findInitialBoundary(multipartBodyBuffer, boundary)
   const allParts = [];
 
-  for (i = 0; i < multipartBodyBuffer.length; i++) {
+  for (; i < multipartBodyBuffer.length; i++) {
     const oneByte = multipartBodyBuffer[i];
     const prevByte = i > 0 ? multipartBodyBuffer[i - 1] : null;
     const newLineDetected = oneByte == 0x0a && prevByte == 0x0d ? true : false;
@@ -107,12 +128,7 @@ exports.Parse = function (multipartBodyBuffer, boundary) {
 
     if (!newLineChar) lastline += String.fromCharCode(oneByte);
 
-    if (state_lookingForBoundary == state && newLineDetected) {
-      if ("--" + boundary == lastline) {
-        state = state_readingHeaders;
-      }
-      lastline = "";
-    } else if (state_readingHeaders == state && newLineDetected) {
+    if (state_readingHeaders == state && newLineDetected) {
       const headerKey = lastline.split(":")[0].trim().toLowerCase()
       switch (headerKey) {
         case '':
