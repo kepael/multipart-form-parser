@@ -1,6 +1,6 @@
 {
   "name": "@davidov541/multipart-form-parser",
-  "version": "1.0.5",
+  "version": "1.1.0",
   "description": "A javascript/nodejs multipart/form-data parser which operates on raw data.",
   "main": "multipart.js",
   "author": "David McGinnis (mcginnda@davidmcginnis.net)",

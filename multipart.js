@@ -24,6 +24,7 @@ function parseHeaders(multipartBodyBuffer, startingIndex) {
   var contentDisposition = "";
   var contentType = "";
   var i = startingIndex;
+  var headerFound = false;
 
   for (; i < multipartBodyBuffer.length; i++) {
     const oneByte = multipartBodyBuffer[i];
@@ -39,6 +40,7 @@ function parseHeaders(multipartBodyBuffer, startingIndex) {
       {
         break;
       }
+      headerFound = true;
       switch (headerKey) {
         case 'content-disposition':
           contentDisposition = lastline;
@@ -55,7 +57,8 @@ function parseHeaders(multipartBodyBuffer, startingIndex) {
   return {
     contentDisposition: contentDisposition,
     contentType: contentType,
-    endOffset: i + 1
+    endOffset: i + 1,
+    headerFound: headerFound
   }
 }
 
@@ -111,7 +114,7 @@ function transformFieldInfo(field) {
     newField.filename = fileNames[0].filename
   }
 
-  const contentType = field.type.split(":")[1].trim();
+  const contentType = field.type.split(":")[1].split(";")[0].trim();
 
   newField.type = contentType;
   newField.data = new Buffer(field.data)
@@ -143,6 +146,11 @@ exports.Parse = function (multipartBodyBuffer, boundary) {
 
   while (i < multipartBodyBuffer.length) {
     const headerInfo = parseHeaders(multipartBodyBuffer, i);
+
+    if (!headerInfo.headerFound)
+    {
+      break;
+    }
 
     const info = parseData(multipartBodyBuffer, headerInfo.endOffset, boundary);
     i = info.endOffset;

@@ -25,6 +25,29 @@ describe("Multipart Body Parser Tests", function () {
     expect(parsed).toEqual(expected);
   });
 
+  test("should correctly parse multipart form data with charset in type.", async function () {
+    const fullBody = "----------------------------848882407475721692347387\r\n" + 
+      "Content-Type: text/plain; charset=us-ascii\r\n" + 
+      "Content-Disposition: form-data; name=file; filename=test.txt; filename*=utf-8''test.txt\r\n" +
+      "\r\n" + 
+      "Hello\r\n" + 
+      "----------------------------848882407475721692347387--\r\n"
+    const fullBodyBuffer = new Buffer(fullBody, "utf-8");
+    const dataBuffer = new Buffer("Hello", "ascii");
+
+    const boundary = "--------------------------848882407475721692347387";
+
+    const parsed = uut.Parse(fullBodyBuffer, boundary);
+    const expected = [
+      {
+        data: dataBuffer,
+        filename: "test.txt",
+        type: "text/plain",
+      },
+    ];
+    expect(parsed).toEqual(expected);
+  });
+
   test("should correctly parse multipart form data with no name in the content-disposition.", async function () {
     const fullBody =
       "----------------------------497983131095136311264163\r\n" +
