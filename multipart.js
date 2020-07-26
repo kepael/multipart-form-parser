@@ -114,9 +114,12 @@ function transformFieldInfo(field) {
     newField.filename = fileNames[0].filename
   }
 
-  const contentType = field.type.split(":")[1].split(";")[0].trim();
-
-  newField.type = contentType;
+  const contentTypeValue = field.type.split(":")[1]
+  if (contentTypeValue)
+  {
+    const contentType = contentTypeValue.split(";")[0].trim();
+    newField.type = contentType;
+  }
   newField.data = new Buffer(field.data)
   return newField;
 };
