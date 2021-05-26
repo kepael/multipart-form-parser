@@ -113,7 +113,13 @@ function transformFieldInfo(field) {
   {
     newField.filename = fileNames[0].filename
   }
-
+  //assignments should have a 'name' which can be assigned to 'newField in the return
+  const names = assignments.filter(p => p.name);
+  if (names.length > 0)
+  {
+    newField.name = names[0].name
+  }
+  
   const contentTypeValue = field.type.split(":")[1]
   if (contentTypeValue)
   {

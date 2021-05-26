@@ -20,6 +20,7 @@ describe("Multipart Body Parser Tests", function () {
         data: dataBuffer,
         filename: "uploadtest.txt",
         type: "text/plain",
+        name: "file"
       },
     ];
     expect(parsed).toEqual(expected);
@@ -43,6 +44,7 @@ describe("Multipart Body Parser Tests", function () {
         data: dataBuffer,
         filename: "test.txt",
         type: "text/plain",
+        name: "file"
       },
     ];
     expect(parsed).toEqual(expected);
@@ -97,11 +99,13 @@ describe("Multipart Body Parser Tests", function () {
         data: dataBuffer1,
         filename: "uploadtest.txt",
         type: "text/plain",
+        name: "file"
       },
       {
         data: dataBuffer2,
         filename: "uploadtest2.txt",
         type: "text/plain",
+        name: "file2"
       },
     ];
     expect(parsed).toEqual(expected);
